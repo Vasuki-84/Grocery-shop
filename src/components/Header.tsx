@@ -74,6 +74,17 @@ export default function Header({ currentScreen, setScreen, cartCount, currentUse
               Admin
             </button>
           )}
+          {currentUser && (
+            <button
+              onClick={() => setScreen('profile')}
+              className={`font-sans text-sm font-semibold tracking-wide transition-all ${
+                currentScreen === 'profile' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary'
+              }`}
+              id="nav-profile"
+            >
+              My Profile
+            </button>
+          )}
         </nav>
 
         {/* User controls and Cart count */}
@@ -82,13 +93,18 @@ export default function Header({ currentScreen, setScreen, cartCount, currentUse
           {currentUser ? (
             <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/30">
               <div 
-                className={`w-7 h-7 ${currentUser.role === 'admin' ? 'bg-primary' : 'bg-secondary-container'} text-white text-xs font-bold font-display flex items-center justify-center rounded-full shadow-sm`}
-                title={`${currentUser.name} (${currentUser.role})`}
+                onClick={() => setScreen('profile')}
+                className={`w-7 h-7 cursor-pointer ${currentUser.role === 'admin' ? 'bg-primary' : 'bg-secondary-container'} text-white text-xs font-bold font-display flex items-center justify-center rounded-full shadow-sm hover:scale-105 transition-transform`}
+                title="View Profile & Order History"
                 id="user-avatar"
               >
                 {currentUser.avatarInitials}
               </div>
-              <span className="hidden sm:inline font-sans text-xs text-on-surface font-medium truncate max-w-[100px]">
+              <span 
+                onClick={() => setScreen('profile')}
+                className="hidden sm:inline font-sans text-xs text-on-surface font-medium truncate max-w-[100px] cursor-pointer hover:text-primary transition-colors"
+                title="View Profile & Order History"
+              >
                 {currentUser.name}
               </span>
               <button 

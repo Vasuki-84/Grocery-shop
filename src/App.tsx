@@ -6,7 +6,8 @@ import ProductCard from './components/ProductCard';
 import CartCheckout from './components/CartCheckout';
 import AuthScreen from './components/AuthScreen';
 import AdminDashboard from './components/AdminDashboard';
-import { ScreenType, Product, CartItem, UserRecord } from './types';
+import UserProfile from './components/UserProfile';
+import { ScreenType, Product, CartItem, UserRecord, Order } from './types';
 import { PRODUCTS, CATEGORIES, DUMMY_CART_INITIAL, MOCK_USERS_INITIAL } from './data';
 
 export default function App() {
@@ -15,6 +16,65 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState<string>('Grocery');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'popular' | 'price-low' | 'price-high'>('popular');
+
+  // Dynamic products catalog persisted state
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('grocify_products');
+      return saved ? JSON.parse(saved) : PRODUCTS;
+    } catch {
+      return PRODUCTS;
+    }
+  });
+
+  // Dynamic categories persisted state
+  const [categories, setCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('grocify_categories');
+      return saved ? JSON.parse(saved) : CATEGORIES;
+    } catch {
+      return CATEGORIES;
+    }
+  });
+
+  // Dynamic user orders persisted state
+  const [orders, setOrders] = useState<Order[]>(() => {
+    try {
+      const saved = localStorage.getItem('grocify_orders');
+      if (saved) return JSON.parse(saved);
+      // Give initial order for testing order history view
+      return [
+        {
+          id: 'ORD-548190',
+          userEmail: 'tester@test.com',
+          date: 'Jun 20, 2026',
+          items: [
+            {
+              id: 'g2',
+              name: 'Ripe Hass Avocados',
+              price: 2.99,
+              quantity: 2,
+              image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVk1vBIoDLjux9H6aK5Wbo9S6KTAGqCvM1x6xEEGbcHQFMN6T5GQ8ZgJNK2-e-1iLD7NevoR-m11ufF5xVxX8tAeNL5nPNuNELmGZo3-iYymCq-1BE3diS336_pl0L76poRXxOWYoRwXi9qsVeRP31ZL-OG9uAff8bmrAdZkFrjVNMjfK_4TZnix3mZwd4vlhBFeOQW2N5c0-FSD-QT4QIUsLiu0gH2vCpcCwsEt4lb_-QIRz_GkHsgPTD_FqIK8Ds7ForH3ih6jk'
+            },
+            {
+              id: 'g5',
+              name: 'Pure Orange Juice',
+              price: 6.99,
+              quantity: 1,
+              image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCDWwY8nYiVXL-sUVUI59UNR65Bc4Uc99QMDDxBj3YprguBkBypTQ8pGbHKHiQcjLDi_p7fuaEIS4zXbYFFMf0SabLEq6KBcaUPRQewL7bhqzisOBeGzpe8cHGfJAGkqm1Onroj-vJ7shlraRx5Rl4U2uinIjPrCsyfjviAiio6K831uQQ9xiJPZ6roPqvNtBPvajDRqz1uzu0p6csKQoIMjSxsaY-RczmslvHEjDiC3EIcBy0Jo_il-j3HxpkbKigEEp9fDA3m5oU'
+            }
+          ],
+          subtotal: 12.97,
+          total: 15.62,
+          status: 'Paid',
+          paymentMethod: 'GPAY',
+          deliveryAddress: 'Home • 966, Mettur main road, Kuruppanaikenpalayam , Bhavani , Erode - 638301'
+        }
+      ];
+    } catch {
+      return [];
+    }
+  });
 
   // Shopping Cart items persisted with localStorage
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -57,6 +117,18 @@ export default function App() {
   });
 
   // Synchronization with browser storage logs
+  useEffect(() => {
+    localStorage.setItem('grocify_products', JSON.stringify(products));
+  }, [products]);
+
+  useEffect(() => {
+    localStorage.setItem('grocify_categories', JSON.stringify(categories));
+  }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('grocify_orders', JSON.stringify(orders));
+  }, [orders]);
+
   useEffect(() => {
     localStorage.setItem('grocify_cart', JSON.stringify(cart));
   }, [cart]);
@@ -131,6 +203,50 @@ export default function App() {
     setScreen('home');
   };
 
+  // Admin Products CRUD handlers
+  const handleAddProduct = (newProd: Omit<Product, 'id'>) => {
+    setProducts(prev => [
+      ...prev,
+      {
+        ...newProd,
+        id: `prod-${Date.now()}`
+      }
+    ]);
+  };
+
+  const handleUpdateProduct = (id: string, updatedProd: Product) => {
+    setProducts(prev => prev.map(p => p.id === id ? updatedProd : p));
+  };
+
+  const handleDeleteProduct = (id: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id));
+  };
+
+  // Admin Categories CRUD handlers
+  const handleAddCategory = (newCat: { id: string; name: string; label: string; icon: string }) => {
+    setCategories(prev => [...prev, newCat]);
+  };
+
+  const handleUpdateCategory = (id: string, updatedCat: { name: string; label: string; icon: string }) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updatedCat } : c));
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+  };
+
+  // Place order from Checkout screen
+  const handlePlaceOrder = (newOrder: Omit<Order, 'userEmail'>) => {
+    const finalEmail = currentUser ? currentUser.email : 'tester@test.com';
+    setOrders(prev => [
+      {
+        ...newOrder,
+        userEmail: finalEmail
+      } as Order,
+      ...prev
+    ]);
+  };
+
   // Admin rows modifier methods
   const handleToggleUserStatus = (id: string) => {
     setUsers(prevUsers =>
@@ -160,7 +276,7 @@ export default function App() {
     ]);
   };
 
-  const filteredStoreProducts = PRODUCTS.filter(p => {
+  const filteredStoreProducts = products.filter(p => {
     const categoryMatches = activeCategory === 'All' ? true : p.category === activeCategory;
     const queryMatches = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          p.subtext.toLowerCase().includes(searchQuery.toLowerCase());
@@ -265,7 +381,7 @@ export default function App() {
               >
                 All categories
               </button>
-              {CATEGORIES.map(cat => (
+              {categories.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
@@ -348,7 +464,7 @@ export default function App() {
                   id="floating-cart-anchor"
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  <span>View Cart • ${cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0).toFixed(2)}</span>
+                  <span>View Cart • ₹{cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0).toFixed(2)}</span>
                   <div className="bg-secondary text-on-secondary text-[11px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center">
                     {totalCartCount}
                   </div>
@@ -365,6 +481,7 @@ export default function App() {
             onRemoveItem={handleRemoveCartItem}
             onClearCart={handleClearCart}
             setScreen={setScreen}
+            onPlaceOrder={handlePlaceOrder}
           />
         )}
 
@@ -378,6 +495,25 @@ export default function App() {
             onToggleStatus={handleToggleUserStatus}
             onDeleteUser={handleDeleteUser}
             onAddUser={handleAddUser}
+            products={products}
+            onAddProduct={handleAddProduct}
+            onUpdateProduct={handleUpdateProduct}
+            onDeleteProduct={handleDeleteProduct}
+            categories={categories}
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onDeleteCategory={handleDeleteCategory}
+          />
+        )}
+
+        {currentScreen === 'profile' && (
+          <UserProfile
+            currentUser={currentUser}
+            orders={orders}
+            favoritesCount={favorites.length}
+            cartCount={totalCartCount}
+            setScreen={setScreen}
+            setActiveCategory={setActiveCategory}
           />
         )}
       </main>
@@ -438,27 +574,90 @@ export default function App() {
           <span>Cart</span>
         </button>
         <button
-          onClick={() => setScreen('login')}
+          onClick={() => setScreen(currentUser ? 'profile' : 'login')}
           className={`flex flex-col items-center justify-center p-2 text-xs font-bold tracking-wide transition-all ${
-            currentScreen === 'login' ? 'text-primary' : 'text-on-surface-variant'
+            currentScreen === 'profile' || currentScreen === 'login' ? 'text-primary' : 'text-on-surface-variant'
           }`}
           id="mobile-nav-profile"
         >
           <span className="material-symbols-outlined text-[20px] mb-0.5">person</span>
-          <span>Profile</span>
+          <span>{currentUser ? 'Profile' : 'Login'}</span>
         </button>
       </nav>
 
       {/* Footer */}
-      <footer className="w-full bg-surface-container-highest border-t border-outline-variant/20 py-8 px-4 md:px-10 justify-between items-center hidden md:flex">
-        <div className="flex flex-col gap-1">
-          <span className="font-display font-bold text-primary text-base">Grocify Retail</span>
-          <span className="text-xs text-on-surface-variant">© 2026 Grocify Retail. Certified organic. Delighting digital doorsteps.</span>
+      <footer className="w-full bg-surface-container-highest border-t border-outline-variant/25 py-12 px-6 md:px-12 font-sans">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          {/* Brand & Address */}
+          <div className="space-y-4">
+            <span className="font-display font-black text-primary text-xl tracking-tight">Grocify Retail</span>
+            <div className="space-y-2 text-xs text-on-surface-variant leading-relaxed">
+              <p className="font-semibold text-on-surface text-xs uppercase tracking-wider">Registered Address:</p>
+              <p className="text-on-surface-variant">966, Mettur main road, Kuruppanaikenpalayam , Bhavani , Erode - 638301.</p>
+            </div>
+          </div>
+
+          {/* Contact Details */}
+          <div className="space-y-4">
+            <span className="font-display font-bold text-on-surface text-sm">Contact Us</span>
+            <div className="space-y-2 text-xs text-on-surface-variant font-medium leading-relaxed">
+              <p className="flex items-center gap-2">
+                <span className="font-bold text-on-surface">Phone:</span> +91 9715532466
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="font-bold text-on-surface">Email:</span> thangarajaarumugam84@gmail.com
+              </p>
+              <p className="text-on-surface-variant/80">Certified Organic Foods & Specialty Products doorsteps.</p>
+            </div>
+          </div>
+
+          {/* Shop Categories Navigation Links */}
+          <div className="space-y-4">
+            <span className="font-display font-bold text-on-surface text-sm">Shop Categories</span>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs font-semibold text-primary">
+              <button 
+                onClick={() => { setActiveCategory('Grocery'); setScreen('shop'); window.scrollTo({top: 0, behavior: 'smooth'}); }} 
+                className="hover:underline text-left outline-none"
+              >
+                Groceries
+              </button>
+              <button 
+                onClick={() => { setActiveCategory('Stationery'); setScreen('shop'); window.scrollTo({top: 0, behavior: 'smooth'}); }} 
+                className="hover:underline text-left outline-none"
+              >
+                Stationery
+              </button>
+              <button 
+                onClick={() => { setActiveCategory('Juices'); setScreen('shop'); window.scrollTo({top: 0, behavior: 'smooth'}); }} 
+                className="hover:underline text-left outline-none"
+              >
+                Raw Juices
+              </button>
+              <button 
+                onClick={() => { setActiveCategory('Personal Care'); setScreen('shop'); window.scrollTo({top: 0, behavior: 'smooth'}); }} 
+                className="hover:underline text-left outline-none"
+              >
+                Personal Care
+              </button>
+              <button 
+                onClick={() => { setActiveCategory('Household'); setScreen('shop'); window.scrollTo({top: 0, behavior: 'smooth'}); }} 
+                className="hover:underline text-left col-span-2 outline-none"
+              >
+                Household Essentials
+              </button>
+            </div>
+          </div>
+
         </div>
-        <div className="flex gap-8 text-xs font-semibold text-on-surface-variant font-sans">
-          <button onClick={() => alert("Privacy policy document ready in store.")} className="hover:text-primary">Privacy Policy</button>
-          <button onClick={() => alert("Terms of Service document ready in store.")} className="hover:text-primary">Terms of Service</button>
-          <button onClick={() => alert("We are online to assist you at support@grocify.com")} className="hover:text-primary">Contact Support</button>
+
+        <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-on-surface-variant/85 font-medium">
+          <span>© 2026 Grocify Retail. Certified organic. All rights reserved.</span>
+          <div className="flex gap-6">
+            <button onClick={() => alert("Privacy policy document ready in store.")} className="hover:text-primary outline-none">Privacy Policy</button>
+            <button onClick={() => alert("Terms of Service document ready in store.")} className="hover:text-primary outline-none">Terms of Service</button>
+            <button onClick={() => alert("We are online to assist you at thangarajaarumugam84@gmail.com")} className="hover:text-primary outline-none">Contact Support</button>
+          </div>
         </div>
       </footer>
 

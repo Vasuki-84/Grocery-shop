@@ -29,4 +29,24 @@ export interface UserRecord {
   status?: 'Paid' | 'Pending';
 }
 
-export type ScreenType = 'home' | 'shop' | 'cart' | 'login' | 'admin';
+export interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
+export interface Order {
+  id: string;
+  userEmail: string;
+  date: string;
+  items: OrderItem[];
+  subtotal: number;
+  total: number;
+  status: 'Paid' | 'Pending';
+  paymentMethod: string;
+  deliveryAddress: string;
+}
+
+export type ScreenType = 'home' | 'shop' | 'cart' | 'login' | 'profile' | 'admin';

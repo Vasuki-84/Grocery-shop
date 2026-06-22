@@ -83,7 +83,7 @@ export default function ProductCard({ product, onAddToCart, isFavorited, onToggl
           <div className="flex flex-col">
             <span className="text-xs text-on-surface-variant font-sans">Price</span>
             <span className="font-display font-extrabold text-base md:text-lg text-on-surface">
-              ${product.price.toFixed(2)}
+              ₹{product.price.toFixed(2)}
             </span>
           </div>
 

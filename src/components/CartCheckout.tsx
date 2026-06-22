@@ -8,9 +8,10 @@ interface CartCheckoutProps {
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
   setScreen: (screen: ScreenType) => void;
+  onPlaceOrder?: (order: any) => void;
 }
 
-export default function CartCheckout({ cart, onUpdateQuantity, onRemoveItem, onClearCart, setScreen }: CartCheckoutProps) {
+export default function CartCheckout({ cart, onUpdateQuantity, onRemoveItem, onClearCart, setScreen, onPlaceOrder }: CartCheckoutProps) {
   // Stateful delivery coordinates
   const [deliveryAddress, setDeliveryAddress] = useState('Home • 24th Avenue, Park Slope, Brooklyn, NY 11215');
   const [isEditingAddress, setIsEditingAddress] = useState(false);
@@ -35,12 +36,30 @@ export default function CartCheckout({ cart, onUpdateQuantity, onRemoveItem, onC
     setTimeout(() => {
       setIsCheckingOut(false);
       setIsConfirmed(true);
+      if (onPlaceOrder) {
+        onPlaceOrder({
+          id: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          items: cart.map(item => ({
+            id: item.id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            image: item.product.image
+          })),
+          subtotal: subtotal,
+          total: total,
+          status: 'Paid',
+          paymentMethod: paymentMethod,
+          deliveryAddress: deliveryAddress
+        });
+      }
       onClearCart(); // empties shopping cart on successful checkout
     }, 1500);
   };
 
   const handlePrintReceipt = () => {
-    alert(`----------------------------------\n        GROCIFY RETAIL RECEIPT\n----------------------------------\nTransaction ID: #GRO-882190\nDate: ${new Date().toLocaleDateString()} | ${new Date().toLocaleTimeString()}\n\n${cart.map(item => `${item.product.name} (x${item.quantity}) - $${(item.product.price * item.quantity).toFixed(2)}`).join('\n')}\n\nSubtotal: $${subtotal.toFixed(2)}\nGST (5%): $${gst.toFixed(2)}\nDelivery Fee: $${deliveryFee.toFixed(2)}\n----------------------------------\nTotal Payable: $${total.toFixed(2)}\n----------------------------------\nPayment Method: ${paymentMethod}\nStatus: PAID online via Secure Checkout\n\nThank you for choosing Grocify! 🌱`);
+    alert(`----------------------------------\n        GROCIFY RETAIL RECEIPT\n----------------------------------\nTransaction ID: #GRO-882190\nDate: ${new Date().toLocaleDateString()} | ${new Date().toLocaleTimeString()}\n\n${cart.map(item => `${item.product.name} (x${item.quantity}) - ₹${(item.product.price * item.quantity).toFixed(2)}`).join('\n')}\n\nSubtotal: ₹${subtotal.toFixed(2)}\nGST (5%): ₹${gst.toFixed(2)}\nDelivery Fee: ₹${deliveryFee.toFixed(2)}\n----------------------------------\nTotal Payable: ₹${total.toFixed(2)}\n----------------------------------\nPayment Method: ${paymentMethod}\nStatus: PAID online via Secure Checkout\n\nThank you for choosing Grocify! 🌱`);
   };
 
   const saveAddress = () => {
@@ -149,7 +168,7 @@ export default function CartCheckout({ cart, onUpdateQuantity, onRemoveItem, onC
 
                     <div className="flex items-center justify-between mt-3 font-sans">
                       <span className="font-display font-extrabold text-primary text-sm">
-                        ${(item.product.price * item.quantity).toFixed(2)}
+                        ₹{(item.product.price * item.quantity).toFixed(2)}
                       </span>
                       {/* Quantity Toggles */}
                       <div className="flex items-center gap-3 bg-surface-container px-3 py-1 rounded-full shadow-inner border border-outline-variant/10">
@@ -195,7 +214,7 @@ export default function CartCheckout({ cart, onUpdateQuantity, onRemoveItem, onC
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between items-center gap-4">
                     <span className="truncate">{item.product.name} (x{item.quantity})</span>
-                    <span className="font-bold flex-shrink-0">${(item.product.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-bold flex-shrink-0">₹{(item.product.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -203,19 +222,19 @@ export default function CartCheckout({ cart, onUpdateQuantity, onRemoveItem, onC
               <div className="border-t border-dashed border-outline-variant pt-4 space-y-1">
                 <div className="flex justify-between font-bold text-primary">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>GST (5%)</span>
-                  <span>${gst.toFixed(2)}</span>
+                  <span>₹{gst.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Delivery Fee</span>
-                  <span>${deliveryFee.toFixed(2)}</span>
+                  <span>₹{deliveryFee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-extrabold text-sm text-on-surface pt-2 border-t border-outline-variant/10">
                   <span>Total Payable</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>₹{total.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -395,7 +414,7 @@ export default function CartCheckout({ cart, onUpdateQuantity, onRemoveItem, onC
                 <div>
                   <p className="text-xs text-on-surface-variant uppercase font-semibold">Grand Total</p>
                   <p className="font-display font-extrabold text-3xl text-on-surface">
-                    ${total.toFixed(2)}
+                    ₹{total.toFixed(2)}
                   </p>
                 </div>
                 <p className="text-xs text-primary font-bold bg-primary-container/20 px-3 py-1 rounded-full">
