@@ -1,0 +1,6 @@
+{
+  "name": "Grocify",
+  "description": "Premium farm-to-table organic grocery and lifestyle shopping platform with storefront browsing, custom product categories, interactive cart management, checkout with simulated payments, and admin panel with transaction trackers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
